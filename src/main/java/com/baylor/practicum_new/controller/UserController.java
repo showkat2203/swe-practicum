@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +27,9 @@ public class UserController {
 
         try {
             User savedUser = userService.createUser(user);
-            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+            return new ResponseEntity<>(Collections.singletonMap("userId", savedUser.getUserId()), HttpStatus.CREATED);
         } catch (RuntimeException e) {
+
             if ("Email already exists".equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
             } else {
@@ -46,7 +49,6 @@ public class UserController {
             userResponse.setEmail(user.get().getEmail());
 
             return new ResponseEntity<>(userResponse, HttpStatus.OK);
-//            return ResponseEntity.ok(userResponse); // responseData, user to return all data
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
         }
