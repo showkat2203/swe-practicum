@@ -1,17 +1,19 @@
 package com.baylor.practicum_new.controller;
 
+import com.baylor.practicum_new.dto.*;
 import com.baylor.practicum_new.dto.CategoryDTO;
-import com.baylor.practicum_new.dto.CategoryDTO;
-import com.baylor.practicum_new.dto.ProductCategoryDTO;
-import com.baylor.practicum_new.dto.ProductDTO;
-import com.baylor.practicum_new.dto.UserProductsDTO;
 import com.baylor.practicum_new.services.ProductService;
 import com.baylor.practicum_new.entities.Product;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,15 +70,53 @@ public class ProductController {
     }
 
     @RequestMapping(value = "/categories/{categoryId}", method = RequestMethod.GET)
-    public ResponseEntity<List<ProductCategoryDTO>> getProductsByCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<List<Map<String, Object>>> getProductsByCategory(@PathVariable Long categoryId) {
         List<ProductCategoryDTO> products = productService.getProductsByCategory(categoryId);
-        return ResponseEntity.ok(products);
+
+        List<Map<String, Object>> formattedProducts = products.stream().map(dto -> {
+            Map<String, Object> productMap = new HashMap<>();
+            productMap.put("productId", dto.getProductId());
+            productMap.put("productName", dto.getProductName());
+            productMap.put("description", dto.getDescription());
+
+            List<Map<String, Long>> formattedCategoryIds = dto.getCategoryIds().stream()
+                    .map(id -> Collections.singletonMap("categoryId", id))
+                    .collect(Collectors.toList());
+            productMap.put("categoryIds", formattedCategoryIds);
+
+            return productMap;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(formattedProducts);
     }
+
 
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryDTO>> getProductsGroupedByCategories() {
         List<CategoryDTO> categories = productService.getProductsGroupedByCategories();
         return ResponseEntity.ok(categories);
+    }
+
+
+    @PostMapping("/bulk-create")
+    public ResponseEntity<?> bulkCreateProducts(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
+        }
+
+        try {
+            List<BulkUploadDTO.UserProductInput> userProductInputs = parseJsonFile(file);
+            productService.bulkCreateUsersAndProducts(userProductInputs);
+            return ResponseEntity.ok("Bulk data processed successfully");
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("Error processing file: " + e.getMessage());
+        }
+    }
+
+    private List<BulkUploadDTO.UserProductInput> parseJsonFile(MultipartFile file) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, BulkUploadDTO.UserProductInput.class);
+        return objectMapper.readValue(file.getInputStream(), type);
     }
 
 }

@@ -18,6 +18,9 @@ public interface ProductService {
     List<ProductCategoryDTO> getProductsByCategory(Long categoryId);
     public List<CategoryDTO> getProductsGroupedByCategories();
 
+    @Transactional
+    public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) ;
+
 
 }
 

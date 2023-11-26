@@ -1,9 +1,7 @@
 package com.baylor.practicum_new.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Set;
 
@@ -21,5 +19,7 @@ public class Category {
     private String description;
 
     @ManyToMany(mappedBy = "categories")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private Set<Product> products;
 }

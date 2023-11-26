@@ -18,6 +18,7 @@ import java.util.Optional;
 @AllArgsConstructor
 @RequestMapping("/")
 public class UserController {
+
     @Autowired
     private UserService userService;
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -130,9 +131,13 @@ public class ProductServiceImpl implements ProductService {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toList());
     }
-
+    @Transactional
     public List<CategoryDTO> getProductsGroupedByCategories() {
         List<Category> categories = categoryRepository.findAllWithProducts();
+
+        categories.forEach(category -> {
+            System.out.println("Category: " + category.getName() + ", Products count: " + (category.getProducts() != null ? category.getProducts().size() : "null"));
+        });
 
         return categories.stream().map(category -> {
             List<ProductDTO> productDTOs = category.getProducts() != null ? category.getProducts().stream()
@@ -141,6 +146,44 @@ public class ProductServiceImpl implements ProductService {
 
             return new CategoryDTO(category.getCategoryId(), category.getName(), category.getDescription(), productDTOs);
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) {
+        for (BulkUploadDTO.UserProductInput userInput : userInputs) {
+            User user = userRepository.findById(userInput.getUserId())
+                    .orElseGet(() -> {
+                        User newUser = new User();
+                        newUser.setName(userInput.getUserName());
+                        newUser.setEmail(generatePlaceholderEmail(userInput.getUserName()));
+                        return userRepository.save(newUser);
+                    });
+
+            for (BulkUploadDTO.ProductInput productInput : userInput.getProducts()) {
+                Product product = new Product();
+                product.setProductName(productInput.getProductName());
+                product.setDescription(productInput.getDescription());
+                product.setUser(user);
+
+                Set<Category> categories = new HashSet<>();
+                for (Long categoryId : productInput.getCategoryIds()) {
+                    Category category = categoryRepository.findById(categoryId)
+                            .orElseGet(() -> {
+                                Category newCategory = new Category();
+                                newCategory.setCategoryId(categoryId);
+                                return categoryRepository.save(newCategory);
+                            });
+                    categories.add(category);
+                }
+                product.setCategories(categories);
+
+                productRepository.save(product);
+            }
+        }
+    }
+
+    private String generatePlaceholderEmail(String userName) {
+        return userName.replaceAll(" ", "_").toLowerCase() + "@placeholder.com";
     }
 
 

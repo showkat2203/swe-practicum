@@ -12,7 +12,6 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
      Optional<Category> findByName(String categoryName);
 
-     @Query("SELECT c FROM Category c LEFT JOIN FETCH c.products")
+     @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.products")
      List<Category> findAllWithProducts();
-
 }
