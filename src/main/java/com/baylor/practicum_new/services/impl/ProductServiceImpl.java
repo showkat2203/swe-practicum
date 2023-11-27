@@ -45,6 +45,10 @@ public class ProductServiceImpl implements ProductService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
+        if (productRepository.existsByProductName(productName)) {
+            throw new IllegalArgumentException("Product name '" + productName + "' already exists.");
+        }
+
         Product product = new Product();
         product.setUser(user);
         product.setProductName(productName);
@@ -93,25 +97,52 @@ public class ProductServiceImpl implements ProductService {
         }).collect(Collectors.toList());
     }
 
+//    @Transactional
+//    public ProductCategoryDTO createProductWithCategory(ProductCategoryDTO productCategoryDTO) {
+//        Product product = productRepository.findById(productCategoryDTO.getProductId())
+//                .orElseThrow(() -> new EntityNotFoundException("Product not found for ID: " + productCategoryDTO.getProductId()));
+//
+//        Set<Category> categories = productCategoryDTO.getCategoryIds().stream()
+//                .map(id -> categoryRepository.findById(id)
+//                        .orElseThrow(() -> new EntityNotFoundException("Category not found for ID: " + id)))
+//                .collect(Collectors.toSet());
+//        product.setCategories(categories);
+//
+//        Product updatedProduct = productRepository.save(product);
+//
+//        Set<Long> categoryIds = updatedProduct.getCategories().stream()
+//                .map(Category::getCategoryId)
+//                .collect(Collectors.toSet());
+//
+//        return new ProductCategoryDTO(updatedProduct.getProductId(), updatedProduct.getProductName(),
+//                updatedProduct.getDescription(), categoryIds);
+//    }
+
     @Transactional
     public ProductCategoryDTO createProductWithCategory(ProductCategoryDTO productCategoryDTO) {
         Product product = productRepository.findById(productCategoryDTO.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found for ID: " + productCategoryDTO.getProductId()));
 
-        Set<Category> categories = productCategoryDTO.getCategoryIds().stream()
+        Set<Long> categoryIds = productCategoryDTO.getCategoryIds();
+
+        if (categoryIds.size() > 3) {
+            throw new IllegalArgumentException("A product cannot be linked to more than three categories.");
+        }
+
+        Set<Category> categories = categoryIds.stream()
                 .map(id -> categoryRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Category not found for ID: " + id)))
                 .collect(Collectors.toSet());
-        product.setCategories(categories);
 
+        product.setCategories(categories);
         Product updatedProduct = productRepository.save(product);
 
-        Set<Long> categoryIds = updatedProduct.getCategories().stream()
+        Set<Long> linkedCategoryIds = updatedProduct.getCategories().stream()
                 .map(Category::getCategoryId)
                 .collect(Collectors.toSet());
 
         return new ProductCategoryDTO(updatedProduct.getProductId(), updatedProduct.getProductName(),
-                updatedProduct.getDescription(), categoryIds);
+                updatedProduct.getDescription(), linkedCategoryIds);
     }
 
     @Override
@@ -131,22 +162,52 @@ public class ProductServiceImpl implements ProductService {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toList());
     }
+//    @Transactional
+//    public List<CategoryDTO> getProductsGroupedByCategories() {
+//        List<Category> categories = categoryRepository.findAllWithProducts();
+//
+//        categories.forEach(category -> {
+//            System.out.println("Category: " + category.getName() + ", Products count: " + (category.getProducts() != null ? category.getProducts().size() : "null"));
+//        });
+//
+//        return categories.stream().map(category -> {
+//            List<ProductDTO> productDTOs = category.getProducts() != null ? category.getProducts().stream()
+//                    .map(product -> new ProductDTO(product.getProductId(), product.getProductName(), product.getDescription()))
+//                    .collect(Collectors.toList()) : new ArrayList<>();
+//
+//            return new CategoryDTO(category.getCategoryId(), category.getName(), category.getDescription(), productDTOs);
+//        }).collect(Collectors.toList());
+//    }
+
     @Transactional
     public List<CategoryDTO> getProductsGroupedByCategories() {
+        // Find products with no category
+        List<Product> noCategoryProducts = productRepository.findAllByCategoriesIsEmpty();
+
+        // Create a 'General' category for products with no category
+        CategoryDTO generalCategory = new CategoryDTO(null, "General", "Products with no specific category",
+                noCategoryProducts.stream()
+                        .map(product -> new ProductDTO(product.getProductId(), product.getProductName(), product.getDescription()))
+                        .collect(Collectors.toList()));
+
+        // Fetch all categories with their products
         List<Category> categories = categoryRepository.findAllWithProducts();
 
-        categories.forEach(category -> {
-            System.out.println("Category: " + category.getName() + ", Products count: " + (category.getProducts() != null ? category.getProducts().size() : "null"));
-        });
-
-        return categories.stream().map(category -> {
+        // Convert categories to DTOs
+        List<CategoryDTO> categoryDTOs = categories.stream().map(category -> {
             List<ProductDTO> productDTOs = category.getProducts() != null ? category.getProducts().stream()
                     .map(product -> new ProductDTO(product.getProductId(), product.getProductName(), product.getDescription()))
                     .collect(Collectors.toList()) : new ArrayList<>();
 
             return new CategoryDTO(category.getCategoryId(), category.getName(), category.getDescription(), productDTOs);
         }).collect(Collectors.toList());
+
+        // Add the 'General' category at the beginning of the list
+        categoryDTOs.add(0, generalCategory);
+
+        return categoryDTOs;
     }
+
 
     @Transactional
     public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) {

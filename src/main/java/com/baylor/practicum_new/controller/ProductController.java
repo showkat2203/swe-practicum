@@ -18,21 +18,43 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/products")
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
+//    @RequestMapping(value = "/create", method = RequestMethod.POST)
+//    public ResponseEntity<?> createProduct(@RequestBody Map<String, Object> productDetails) {
+//        Long userId = Long.parseLong(productDetails.get("userId").toString());
+//        String productName = productDetails.get("productName").toString();
+//        String description = productDetails.get("description").toString();
+//
+//        ProductDTO product = productService.createProduct(userId, productName, description);
+//        return new ResponseEntity<>(Collections.singletonMap("productId", product.getProductId()), HttpStatus.CREATED);
+//    }
+
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public ResponseEntity<?> createProduct(@RequestBody Map<String, Object> productDetails) {
-        Long userId = Long.parseLong(productDetails.get("userId").toString());
-        String productName = productDetails.get("productName").toString();
-        String description = productDetails.get("description").toString();
+        try {
+            Long userId = Long.parseLong(productDetails.get("userId").toString());
+            String productName = productDetails.get("productName").toString();
+            String description = productDetails.get("description").toString();
 
-        ProductDTO product = productService.createProduct(userId, productName, description);
-        return new ResponseEntity<>(Collections.singletonMap("productId", product.getProductId()), HttpStatus.CREATED);
+            ProductDTO product = productService.createProduct(userId, productName, description);
+            return new ResponseEntity<>(Collections.singletonMap("productId", product.getProductId()), HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Error: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Error: " + e.getMessage());
+        }
     }
+
 
     @RequestMapping(value = "/link-categories", method = RequestMethod.POST)
     public ResponseEntity<?> linkCategoriesToProduct(@RequestBody ProductCategoryDTO productCategoryDTO) {

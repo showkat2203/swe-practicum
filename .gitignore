@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-README.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -33,9 +30,6 @@ build/
 
 ### VS Code ###
 .vscode/
-=======
-=======
->>>>>>> 736028790c606bdda16cde4bec624561807aee0b
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -53,7 +47,3 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-<<<<<<< HEAD
->>>>>>> Initial commit
-=======
->>>>>>> 736028790c606bdda16cde4bec624561807aee0b
