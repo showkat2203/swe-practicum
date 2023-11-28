@@ -25,16 +25,6 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-//    @RequestMapping(value = "/create", method = RequestMethod.POST)
-//    public ResponseEntity<?> createProduct(@RequestBody Map<String, Object> productDetails) {
-//        Long userId = Long.parseLong(productDetails.get("userId").toString());
-//        String productName = productDetails.get("productName").toString();
-//        String description = productDetails.get("description").toString();
-//
-//        ProductDTO product = productService.createProduct(userId, productName, description);
-//        return new ResponseEntity<>(Collections.singletonMap("productId", product.getProductId()), HttpStatus.CREATED);
-//    }
-
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public ResponseEntity<?> createProduct(@RequestBody Map<String, Object> productDetails) {
         try {
