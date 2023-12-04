@@ -196,11 +196,18 @@ public class ProductController {
 //        return ResponseEntity.ok(updatedProduct);
 //    }
 
-    @DeleteMapping("/{productId}")
+    @DeleteMapping("/delete/{productId}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long productId) {
-        productService.deleteProduct(productId);
-        return ResponseEntity.ok().build();
+        try {
+            productService.deleteProduct(productId);
+            return ResponseEntity.ok("Product successfully deleted");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
     }
+
 
     @RequestMapping(value = "/{productId}/categories", method = RequestMethod.GET)
     public ResponseEntity<List<CategoryDTO>> getCategoriesByProduct(@PathVariable Long productId) {

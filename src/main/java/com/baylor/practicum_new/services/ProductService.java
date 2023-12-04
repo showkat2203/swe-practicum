@@ -23,7 +23,8 @@ public interface ProductService {
 
     ProductDTO getProductById(Long productId);
     public ProductDTO updateProduct(Long productId, String productName, String description);
-    void deleteProduct(Long productId);
+    @Transactional
+    public void deleteProduct(Long productId);
 
     List<CategoryDTO> getCategoriesByProduct(Long productId);
 
