@@ -4,6 +4,7 @@ package com.baylor.practicum_new.controller;
 import com.baylor.practicum_new.dto.CategoryDTO;
 import com.baylor.practicum_new.entities.Category;
 import com.baylor.practicum_new.services.CategoryService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,29 @@ public class CategoryController {
         return new ResponseEntity<>(categoryDTOs, HttpStatus.OK);
     }
 
+    @PutMapping("/{categoryId}/edit")
+    public ResponseEntity<?> updateCategory(@PathVariable Long categoryId, @RequestBody Category category) {
+        try {
+            Category updatedCategory = categoryService.updateCategory(categoryId, category);
+            return new ResponseEntity<>(new CategoryDTO(updatedCategory.getCategoryId(), updatedCategory.getName(), updatedCategory.getDescription(), null), HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{categoryId}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Long categoryId) {
+        try {
+            categoryService.deleteCategory(categoryId);
+            return ResponseEntity.ok().body("Category deleted successfully");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting category: " + e.getMessage());
+        }
+    }
 
 
 }

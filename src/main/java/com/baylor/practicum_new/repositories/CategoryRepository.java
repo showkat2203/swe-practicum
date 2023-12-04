@@ -11,6 +11,8 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
      Optional<Category> findByName(String categoryName);
+     boolean existsByName(String name);
+
 
      @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.products")
      List<Category> findAllWithProducts();

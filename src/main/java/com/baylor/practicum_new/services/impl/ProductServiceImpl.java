@@ -169,40 +169,6 @@ public class ProductServiceImpl implements ProductService {
         return categoryDTOs;
     }
 
-//
-//    @Transactional
-//    public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) {
-//        for (BulkUploadDTO.UserProductInput userInput : userInputs) {
-//            User user = userRepository.findById(userInput.getUserId())
-//                    .orElseGet(() -> {
-//                        User newUser = new User();
-//                        newUser.setName(userInput.getUserName());
-//                        newUser.setEmail(generatePlaceholderEmail(userInput.getUserName()));
-//                        return userRepository.save(newUser);
-//                    });
-//
-//            for (BulkUploadDTO.ProductInput productInput : userInput.getProducts()) {
-//                Product product = new Product();
-//                product.setProductName(productInput.getProductName());
-//                product.setDescription(productInput.getDescription());
-//                product.setUser(user);
-//
-//                Set<Category> categories = new HashSet<>();
-//                for (Long categoryId : productInput.getCategoryIds()) {
-//                    Category category = categoryRepository.findById(categoryId)
-//                            .orElseGet(() -> {
-//                                Category newCategory = new Category();
-//                                newCategory.setCategoryId(categoryId);
-//                                return categoryRepository.save(newCategory);
-//                            });
-//                    categories.add(category);
-//                }
-//                product.setCategories(categories);
-//
-//                productRepository.save(product);
-//            }
-//        }
-//    }
 
     @Transactional
     public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) {
@@ -216,20 +182,8 @@ public class ProductServiceImpl implements ProductService {
                     });
 
             for (BulkUploadDTO.ProductInput productInput : userInput.getProducts()) {
-                // Check for duplicate product name, ignoring case
-                String productName = productInput.getProductName();
-                boolean productExists = productRepository
-                        .findAll() // or use a more efficient query method if available
-                        .stream()
-                        .anyMatch(p -> p.getProductName().equalsIgnoreCase(productName));
-
-                if (productExists) {
-                    // Handle duplicate name case, e.g., skip or log
-                    continue; // Skip this product
-                }
-
                 Product product = new Product();
-                product.setProductName(productName);
+                product.setProductName(productInput.getProductName());
                 product.setDescription(productInput.getDescription());
                 product.setUser(user);
 
@@ -249,6 +203,52 @@ public class ProductServiceImpl implements ProductService {
             }
         }
     }
+
+//    @Transactional
+//    public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) {
+//        for (BulkUploadDTO.UserProductInput userInput : userInputs) {
+//            User user = userRepository.findById(userInput.getUserId())
+//                    .orElseGet(() -> {
+//                        User newUser = new User();
+//                        newUser.setName(userInput.getUserName());
+//                        newUser.setEmail(generatePlaceholderEmail(userInput.getUserName()));
+//                        return userRepository.save(newUser);
+//                    });
+//
+//            for (BulkUploadDTO.ProductInput productInput : userInput.getProducts()) {
+//                // Check for duplicate product name, ignoring case
+//                String productName = productInput.getProductName();
+//                boolean productExists = productRepository
+//                        .findAll() // or use a more efficient query method if available
+//                        .stream()
+//                        .anyMatch(p -> p.getProductName().equalsIgnoreCase(productName));
+//
+//                if (productExists) {
+//                    // Handle duplicate name case, e.g., skip or log
+//                    continue; // Skip this product
+//                }
+//
+//                Product product = new Product();
+//                product.setProductName(productName);
+//                product.setDescription(productInput.getDescription());
+//                product.setUser(user);
+//
+//                Set<Category> categories = new HashSet<>();
+//                for (Long categoryId : productInput.getCategoryIds()) {
+//                    Category category = categoryRepository.findById(categoryId)
+//                            .orElseGet(() -> {
+//                                Category newCategory = new Category();
+//                                newCategory.setCategoryId(categoryId);
+//                                return categoryRepository.save(newCategory);
+//                            });
+//                    categories.add(category);
+//                }
+//                product.setCategories(categories);
+//
+//                productRepository.save(product);
+//            }
+//        }
+//    }
 
 
     private String generatePlaceholderEmail(String userName) {
