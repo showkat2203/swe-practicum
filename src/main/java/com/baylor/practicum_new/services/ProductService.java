@@ -21,6 +21,13 @@ public interface ProductService {
     @Transactional
     public void bulkCreateUsersAndProducts(List<BulkUploadDTO.UserProductInput> userInputs) ;
 
+    ProductDTO getProductById(Long productId);
+    public ProductDTO updateProduct(Long productId, String productName, String description);
+    void deleteProduct(Long productId);
+
+    List<CategoryDTO> getCategoriesByProduct(Long productId);
+
+
 
 }
 

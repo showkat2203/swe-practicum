@@ -97,27 +97,6 @@ public class ProductServiceImpl implements ProductService {
         }).collect(Collectors.toList());
     }
 
-//    @Transactional
-//    public ProductCategoryDTO createProductWithCategory(ProductCategoryDTO productCategoryDTO) {
-//        Product product = productRepository.findById(productCategoryDTO.getProductId())
-//                .orElseThrow(() -> new EntityNotFoundException("Product not found for ID: " + productCategoryDTO.getProductId()));
-//
-//        Set<Category> categories = productCategoryDTO.getCategoryIds().stream()
-//                .map(id -> categoryRepository.findById(id)
-//                        .orElseThrow(() -> new EntityNotFoundException("Category not found for ID: " + id)))
-//                .collect(Collectors.toSet());
-//        product.setCategories(categories);
-//
-//        Product updatedProduct = productRepository.save(product);
-//
-//        Set<Long> categoryIds = updatedProduct.getCategories().stream()
-//                .map(Category::getCategoryId)
-//                .collect(Collectors.toSet());
-//
-//        return new ProductCategoryDTO(updatedProduct.getProductId(), updatedProduct.getProductName(),
-//                updatedProduct.getDescription(), categoryIds);
-//    }
-
     @Transactional
     public ProductCategoryDTO createProductWithCategory(ProductCategoryDTO productCategoryDTO) {
         Product product = productRepository.findById(productCategoryDTO.getProductId())
@@ -162,26 +141,8 @@ public class ProductServiceImpl implements ProductService {
                                 .collect(Collectors.toSet())))
                 .collect(Collectors.toList());
     }
-//    @Transactional
-//    public List<CategoryDTO> getProductsGroupedByCategories() {
-//        List<Category> categories = categoryRepository.findAllWithProducts();
-//
-//        categories.forEach(category -> {
-//            System.out.println("Category: " + category.getName() + ", Products count: " + (category.getProducts() != null ? category.getProducts().size() : "null"));
-//        });
-//
-//        return categories.stream().map(category -> {
-//            List<ProductDTO> productDTOs = category.getProducts() != null ? category.getProducts().stream()
-//                    .map(product -> new ProductDTO(product.getProductId(), product.getProductName(), product.getDescription()))
-//                    .collect(Collectors.toList()) : new ArrayList<>();
-//
-//            return new CategoryDTO(category.getCategoryId(), category.getName(), category.getDescription(), productDTOs);
-//        }).collect(Collectors.toList());
-//    }
-
     @Transactional
     public List<CategoryDTO> getProductsGroupedByCategories() {
-        // Find products with no category
         List<Product> noCategoryProducts = productRepository.findAllByCategoriesIsEmpty();
 
         // Create a 'General' category for products with no category
@@ -246,6 +207,49 @@ public class ProductServiceImpl implements ProductService {
     private String generatePlaceholderEmail(String userName) {
         return userName.replaceAll(" ", "_").toLowerCase() + "@placeholder.com";
     }
+
+    @Override
+    public ProductDTO getProductById(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        return new ProductDTO(product.getProductId(), product.getProductName(), product.getDescription());
+    }
+
+    @Override
+    public ProductDTO updateProduct(Long productId, String productName, String description) {
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found for ID: " + productId));
+
+        boolean productNameExists = productRepository
+                .findByProductNameAndProductIdNot(productName, productId)
+                .isPresent();
+
+        if (productNameExists) {
+            throw new IllegalArgumentException("Product name '" + productName + "' already exists.");
+        }
+        existingProduct.setProductName(productName);
+        existingProduct.setDescription(description);
+
+        Product updatedProduct = productRepository.save(existingProduct);
+        return new ProductDTO(updatedProduct.getProductId(), updatedProduct.getProductName(), updatedProduct.getDescription());
+    }
+
+
+    @Override
+    public void deleteProduct(Long productId) {
+        productRepository.deleteById(productId);
+    }
+
+    @Override
+    public List<CategoryDTO> getCategoriesByProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found for ID: " + productId));
+
+        return product.getCategories().stream()
+                .map(category -> new CategoryDTO(category.getCategoryId(), category.getName(), category.getDescription(), null))
+                .collect(Collectors.toList());
+    }
+
 
 
 }

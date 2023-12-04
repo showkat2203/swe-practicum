@@ -6,6 +6,7 @@ import com.baylor.practicum_new.services.ProductService;
 import com.baylor.practicum_new.entities.Product;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +46,58 @@ public class ProductController {
         }
     }
 
+    @RequestMapping(value = "/{productId}/edit", method = RequestMethod.PUT)
+    public ResponseEntity<?> updateProduct(@PathVariable Long productId, @RequestBody Map<String, Object> productDetails) {
+        try {
+            String productName = productDetails.get("productName").toString();
+            String description = productDetails.get("description").toString();
+
+            ProductDTO product = productService.updateProduct(productId, productName, description);
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("productId", product.getProductId());
+            responseBody.put("message", "Product updated successfully");
+
+            return new ResponseEntity<>(responseBody, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+
+//    @RequestMapping(value = "/create", method = RequestMethod.POST)
+//    public ResponseEntity<?> createOrUpdateProduct(@RequestBody Map<String, Object> productDetails) {
+//        try {
+//            Long userId = Long.parseLong(productDetails.get("userId").toString());
+//            String productName = productDetails.get("productName").toString();
+//            String description = productDetails.get("description").toString();
+//            Long productId = productDetails.containsKey("productId") ? Long.parseLong(productDetails.get("productId").toString()) : null;
+//
+//            ProductDTO product;
+//            String message;
+//            if (productId == null) {
+//                product = productService.createProduct(userId, productName, description);
+//                message = "Product created successfully";
+//            } else {
+//                product = productService.updateProduct(productId, productName, description);
+//                message = "Product updated successfully";
+//            }
+//
+//            Map<String, Object> responseBody = new HashMap<>();
+//            responseBody.put("productId", product.getProductId());
+//            responseBody.put("message", message);
+//
+//            return new ResponseEntity<>(responseBody, HttpStatus.CREATED);
+//        } catch (IllegalArgumentException | EntityNotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+//        }
+//    }
 
     @RequestMapping(value = "/link-categories", method = RequestMethod.POST)
     public ResponseEntity<?> linkCategoriesToProduct(@RequestBody ProductCategoryDTO productCategoryDTO) {
@@ -130,5 +183,36 @@ public class ProductController {
         JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, BulkUploadDTO.UserProductInput.class);
         return objectMapper.readValue(file.getInputStream(), type);
     }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long productId) {
+        ProductDTO product = productService.getProductById(productId);
+        return ResponseEntity.ok(product);
+    }
+
+//    @PutMapping("/{productId}")
+//    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long productId, @RequestBody ProductDTO productDTO) {
+//        ProductDTO updatedProduct = productService.updateProduct(productId, productDTO);
+//        return ResponseEntity.ok(updatedProduct);
+//    }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long productId) {
+        productService.deleteProduct(productId);
+        return ResponseEntity.ok().build();
+    }
+
+    @RequestMapping(value = "/{productId}/categories", method = RequestMethod.GET)
+    public ResponseEntity<List<CategoryDTO>> getCategoriesByProduct(@PathVariable Long productId) {
+        try {
+            List<CategoryDTO> categories = productService.getCategoriesByProduct(productId);
+            return ResponseEntity.ok(categories);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
+
 
 }
